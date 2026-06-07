@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="420" viewBox="0 0 1400 420" role="img" aria-labelledby="title desc">
+  <title id="title">HTML Page Viewer for Obsidian</title>
+  <desc id="desc">A dark Obsidian-style hero showing a sandboxed HTML preview and source panel.</desc>
+  <rect width="1400" height="420" fill="#17181c"/>
+  <rect x="48" y="48" width="1304" height="324" rx="18" fill="#202126" stroke="#3b3d45"/>
+  <rect x="48" y="48" width="1304" height="52" rx="18" fill="#26272d"/>
+  <circle cx="82" cy="74" r="8" fill="#ff5f57"/>
+  <circle cx="108" cy="74" r="8" fill="#ffbd2e"/>
+  <circle cx="134" cy="74" r="8" fill="#28c840"/>
+  <text x="80" y="166" fill="#f4f4f5" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="750">HTML Page Viewer</text>
+  <text x="82" y="206" fill="#a7a7ad" font-family="Inter, Arial, sans-serif" font-size="20">Rendered HTML preview + syntax-highlighted source for Obsidian</text>
+  <g transform="translate(82 248)">
+    <rect width="118" height="34" rx="8" fill="#3f3f46"/>
+    <text x="21" y="23" fill="#f4f4f5" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Rendered</text>
+    <rect x="128" width="82" height="34" rx="8" fill="#27272a" stroke="#45454c"/>
+    <text x="149" y="23" fill="#d4d4d8" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Source</text>
+    <rect x="222" width="112" height="34" rx="8" fill="#17251e" stroke="#28684a"/>
+    <text x="242" y="23" fill="#62d88f" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Scripts OFF</text>
+  </g>
+  <g transform="translate(748 126)">
+    <rect width="520" height="226" rx="12" fill="#111827" stroke="#3b3d45"/>
+    <rect x="22" y="20" width="476" height="42" rx="8" fill="#f8fafc"/>
+    <text x="42" y="47" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="750">Vault report</text>
+    <rect x="22" y="82" width="220" height="26" rx="6" fill="#e0f2fe"/>
+    <rect x="22" y="124" width="476" height="14" rx="7" fill="#cbd5e1"/>
+    <rect x="22" y="154" width="392" height="14" rx="7" fill="#cbd5e1"/>
+    <rect x="22" y="184" width="450" height="14" rx="7" fill="#cbd5e1"/>
+  </g>
+  <g transform="translate(1036 158)">
+    <rect width="202" height="154" rx="10" fill="#1e1f24" stroke="#45454c"/>
+    <text x="18" y="34" fill="#ff4f9a" font-family="Menlo, Consolas, monospace" font-size="14">&lt;main&gt;</text>
+    <text x="30" y="64" fill="#59c8ff" font-family="Menlo, Consolas, monospace" font-size="14">class</text>
+    <text x="80" y="64" fill="#e6d85c" font-family="Menlo, Consolas, monospace" font-size="14">"report"</text>
+    <text x="30" y="94" fill="#8f8f8f" font-family="Menlo, Consolas, monospace" font-size="14">&lt;!-- local --&gt;</text>
+    <text x="18" y="124" fill="#ff4f9a" font-family="Menlo, Consolas, monospace" font-size="14">&lt;/main&gt;</text>
+  </g>
+</svg>

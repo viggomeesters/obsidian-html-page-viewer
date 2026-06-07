@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">HTML Page Viewer screenshot</title>
+  <desc id="desc">Rendered HTML preview in Obsidian with toolbar and sandbox status.</desc>
+  <rect width="1280" height="760" fill="#1f2026"/>
+  <rect x="48" y="40" width="1184" height="680" rx="16" fill="#23242a" stroke="#3c3d45"/>
+  <rect x="48" y="40" width="1184" height="58" rx="16" fill="#2a2b31"/>
+  <circle cx="80" cy="69" r="8" fill="#ff5f57"/>
+  <circle cx="106" cy="69" r="8" fill="#ffbd2e"/>
+  <circle cx="132" cy="69" r="8" fill="#28c840"/>
+  <text x="86" y="144" fill="#f4f4f5" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="750">demo-report.html</text>
+  <text x="86" y="174" fill="#a7a7ad" font-family="Menlo, Consolas, monospace" font-size="14">20_files/2026-06/demo-report.html</text>
+  <g transform="translate(862 126)">
+    <rect width="96" height="32" rx="7" fill="#3f3f46"/>
+    <text x="18" y="21" fill="#f4f4f5" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Rendered</text>
+    <rect x="104" width="72" height="32" rx="7" fill="#27272a" stroke="#45454c"/>
+    <text x="122" y="21" fill="#d4d4d8" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Source</text>
+    <rect x="186" width="110" height="32" rx="7" fill="#17251e" stroke="#28684a"/>
+    <text x="206" y="21" fill="#62d88f" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Scripts OFF</text>
+  </g>
+  <rect x="86" y="206" width="1094" height="30" rx="15" fill="#191b20" stroke="#3c3d45"/>
+  <text x="104" y="226" fill="#d4d4d8" font-family="Inter, Arial, sans-serif" font-size="13">Sandbox blocks scripts, forms, popups, top navigation, and same-origin access.</text>
+  <rect x="86" y="258" width="1094" height="426" rx="10" fill="#ffffff"/>
+  <rect x="128" y="306" width="1010" height="76" rx="12" fill="#111827"/>
+  <text x="168" y="354" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800">Generated vault report</text>
+  <rect x="128" y="414" width="270" height="42" rx="8" fill="#e0f2fe"/>
+  <rect x="430" y="414" width="270" height="42" rx="8" fill="#dcfce7"/>
+  <rect x="732" y="414" width="270" height="42" rx="8" fill="#fef9c3"/>
+  <rect x="128" y="494" width="930" height="18" rx="9" fill="#cbd5e1"/>
+  <rect x="128" y="534" width="820" height="18" rx="9" fill="#cbd5e1"/>
+  <rect x="128" y="574" width="970" height="18" rx="9" fill="#cbd5e1"/>
+</svg>
