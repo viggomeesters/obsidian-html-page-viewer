@@ -8,7 +8,7 @@ const interactiveFixture = fs.readFileSync("test-fixtures/interactive.html", "ut
 
 const assertions = [
   [manifest.id === "html-page-viewer", "manifest id is html-page-viewer"],
-  [manifest.version === "0.1.0", "manifest version is 0.1.0"],
+  [manifest.version === "0.1.1", "manifest version is 0.1.1"],
   [main.includes("private scriptsEnabled = false"), "scripts default to off"],
   [main.includes("sandboxValue(this.scriptsEnabled)"), "iframe sandbox is derived from script toggle"],
   [main.includes("allow-scripts"), "script toggle grants only allow-scripts"],

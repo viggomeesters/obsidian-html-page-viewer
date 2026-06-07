@@ -2,6 +2,10 @@
 
 All notable changes to HTML Page Viewer are documented here.
 
+## 0.1.1 - 2026-06-07
+
+- Remove the redundant product name from the manifest description for Community review compatibility.
+
 ## 0.1.0 - 2026-06-07
 
 - Initial public release.

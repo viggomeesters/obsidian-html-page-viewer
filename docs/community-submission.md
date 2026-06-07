@@ -1,6 +1,6 @@
 # Obsidian Community Submission Checklist
 
-Current release target: `0.1.0`
+Current release target: `0.1.1`
 
 ## Repository
 
@@ -24,7 +24,7 @@ Current release target: `0.1.0`
 
 ## Artifact attestations
 
-The repository contains `.github/workflows/release.yml` with `actions/attest-build-provenance@v3`. GitHub rejected workflow dispatch with `Actions has been disabled for this user`, so release `0.1.0` was created manually. Obsidian may therefore show a recommendation about missing artifact attestations until GitHub Actions is enabled for the account and a workflow-built release is published.
+The repository contains `.github/workflows/release.yml` with `actions/attest-build-provenance@v3`. GitHub rejected workflow dispatch with `Actions has been disabled for this user`, so release `0.1.1` was created manually. Obsidian may therefore show a recommendation about missing artifact attestations until GitHub Actions is enabled for the account and a workflow-built release is published.
 
 ## Directory Submission
 
