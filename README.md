@@ -132,6 +132,10 @@ Official references:
 - [Submit your plugin](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin)
 - [Obsidian releases repository](https://github.com/obsidianmd/obsidian-releases)
 
+## Acknowledgements
+
+HTML Page Viewer was built independently, but it was informed by the existing Obsidian HTML viewer ecosystem, including the MIT-licensed [JiaLinZhang24/obsidian-html-viewer](https://github.com/JiaLinZhang24/obsidian-html-viewer). No source code from that project is included in this repository.
+
 ## License
 
 [MIT](LICENSE)
