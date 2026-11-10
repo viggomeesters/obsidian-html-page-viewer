@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test
+      - name: Smoke test
         run: npm test
 
       - name: Read manifest version

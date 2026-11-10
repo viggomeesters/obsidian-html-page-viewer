@@ -22,7 +22,7 @@ HTML Page Viewer is a read-only Obsidian plugin for opening `.html` and `.htm` f
 - Provides a source view with lightweight HTML syntax highlighting and line numbers.
 - Includes a toolbar for Rendered/Source, Refresh, and Scripts OFF/ON.
 - Keeps scripts disabled by default.
-- Enables scripts only for the current viewer tab when explicitly toggled on.
+- Remembers explicit script permission separately for each HTML file.
 - Renders through a sandboxed iframe.
 - Blocks forms, popups, top-level navigation, and same-origin access.
 - Stays read-only by design: it never writes back to HTML files.
@@ -36,23 +36,21 @@ HTML files can execute powerful browser behavior if a viewer permits it. HTML Pa
 - The iframe is never granted `allow-same-origin`, `allow-forms`, `allow-popups`, or `allow-top-navigation`.
 - The plugin code does not make network requests.
 - The plugin code does not read or write the system clipboard.
-- The plugin code does not edit vault files.
+- The plugin saves script permissions in its own settings.
 
 Rendered HTML may still request external resources, such as images, stylesheets, fonts, or scripts, when the HTML document itself references them. This is normal browser behavior for rendered HTML pages and is separate from plugin code making network requests.
 
 ## Why read-only?
 
-HTML reports and exported pages are often generated artifacts. HTML Page Viewer intentionally does not write to disk, so it cannot reformat, truncate, or corrupt your files.
+HTML reports and exported pages are often generated artifacts. HTML Page Viewer leaves your HTML files untouched.
 
 ## Installation
 
 ### Community plugin directory
 
-HTML Page Viewer is ready for submission to the Obsidian Community plugin directory. Once accepted, it can be installed from **Settings -> Community plugins -> Browse** inside Obsidian.
+Install from the [Obsidian Community directory](https://community.obsidian.md/plugins/html-page-viewer) or search for HTML Page Viewer in Settings → Community plugins → Browse.
 
 ### Manual installation
-
-Until the community directory submission is accepted:
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/viggomeesters/obsidian-html-page-viewer/releases/latest).
 2. Create this folder in your vault: `.obsidian/plugins/html-page-viewer/`.
@@ -76,9 +74,9 @@ Use the toolbar to:
 
 - switch between the rendered preview and source view
 - refresh the rendered preview after file changes
-- turn scripts on or off for the current viewer tab
+- turn scripts on or off for the current HTML file
 
-Scripts are intentionally per-tab. Opening a new HTML file starts with scripts off again.
+The Scripts toggle remembers your choice when you switch files or restart Obsidian. Enable it only for files you trust, including future edits at the same path. Turning scripts off removes the saved permission. Renaming, moving, or deleting a file in Obsidian clears permission for its old path.
 
 ## Development
 
@@ -102,37 +100,9 @@ Obsidian installs community plugin files from GitHub releases. For each release:
 
 The repository includes a GitHub Actions release workflow with artifact attestation support. If GitHub Actions is disabled for the owner account, manual releases are still usable for Obsidian, but the Community automated review may show a recommendation about missing artifact attestations.
 
-## Community directory submission
+## Community directory
 
-The repository is prepared for Obsidian Community plugin submission. The remaining submission step must be completed by the repository owner in the Obsidian Community site because it requires signing in, linking GitHub, and confirming the developer policies/support commitment.
-
-Submit this repository URL:
-
-```text
-https://github.com/viggomeesters/obsidian-html-page-viewer
-```
-
-Steps:
-
-1. Sign in to [community.obsidian.md](https://community.obsidian.md).
-2. Link the GitHub account that owns this repository.
-3. Open **Plugins -> New plugin**.
-4. Enter the repository URL above.
-5. Confirm the developer policies and submit.
-6. Address any automated review feedback.
-
-The current release is ready for review:
-
-- root `README.md`, `LICENSE`, and `manifest.json` exist
-- `manifest.json.version` is `0.1.1`
-- GitHub release `0.1.1` exists
-- release assets include `main.js`, `manifest.json`, and `styles.css`
-- `versions.json` maps supported Obsidian versions
-
-Official references:
-
-- [Submit your plugin](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin)
-- [Obsidian releases repository](https://github.com/obsidianmd/obsidian-releases)
+HTML Page Viewer is listed in the [Obsidian Community directory](https://community.obsidian.md/plugins/html-page-viewer).
 
 ## Acknowledgements
 

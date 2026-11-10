@@ -4,8 +4,8 @@ import { describe, it } from "node:test";
 import esbuild from "esbuild";
 
 // The security model promises that the plugin's own code makes no network
-// requests and does not touch the clipboard. These checks read the bundle the
-// build would produce, so they cover every source file and nothing else.
+// requests and does not touch the clipboard. These smoke checks look for
+// recognizable API use in the bundled plugin code.
 const bundle = (
   await esbuild.build({
     bundle: true,
@@ -34,8 +34,8 @@ describe("plugin code", () => {
     });
   }
 
-  it("does not write to vault files", () => {
-    assert.doesNotMatch(bundle, /\.(modify|process|create|delete|trash|rename|append)\s*\(/);
+  it("has no direct calls to vault file mutation APIs", () => {
+    assert.doesNotMatch(bundle, /\bvault\.(?:adapter\.)?(?:modify|process|create|createBinary|delete|trash|rename|append|write|writeBinary|remove)\s*\(/);
   });
 });
 

@@ -49,7 +49,7 @@ describe("source view", () => {
     });
   }
 
-  it("shows markup as text and never runs it", async () => {
+  it("shows markup as text without creating HTML elements", async () => {
     const data = '<script>window.ran = true;</script><img src="x" onerror="window.ran = true">';
     const view = await showSource(data);
     const source = view.contentEl.querySelector(".html-page-viewer__source");

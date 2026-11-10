@@ -37,6 +37,7 @@ export interface ViewState {
 export class WorkspaceLeaf {
   readonly app: App;
   readonly viewStates: ViewState[] = [];
+  view: unknown;
 
   constructor(app: App) {
     this.app = app;
@@ -58,8 +59,15 @@ export class App {
   readonly leaves: WorkspaceLeaf[] = [];
   activeFile: TFile | null = null;
   readError: Error | null = null;
+  pluginData: unknown = null;
+  readonly pendingPluginSaves = new Set<Promise<void>>();
+  maxConcurrentPluginSaves = 0;
+  readonly vaultEvents = new Map<string, (file: { path: string }, oldPath: string) => void>();
 
   readonly vault = {
+    on: (event: string, handler: (file: { path: string }, oldPath: string) => void): void => {
+      this.vaultEvents.set(event, handler);
+    },
     getResourcePath: (file: TFile): string => resourcePath(file),
     read: async (file: TFile): Promise<string> => {
       this.reads.push(file.path);
@@ -70,6 +78,7 @@ export class App {
 
   readonly workspace = {
     getActiveFile: (): TFile | null => this.activeFile,
+    getLeavesOfType: (): WorkspaceLeaf[] => this.leaves.filter((leaf) => leaf.view !== undefined),
     getLeaf: (): WorkspaceLeaf => {
       const leaf = new WorkspaceLeaf(this);
       this.leaves.push(leaf);
@@ -95,6 +104,26 @@ export class Plugin {
     this.app = app;
     this.manifest = manifest;
   }
+
+  async loadData(): Promise<unknown> {
+    return structuredClone(this.app.pluginData);
+  }
+
+  async saveData(data: unknown): Promise<void> {
+    const write = new Promise<void>((resolve) => setImmediate(() => {
+      this.app.pluginData = structuredClone(data);
+      resolve();
+    }));
+    this.app.pendingPluginSaves.add(write);
+    this.app.maxConcurrentPluginSaves = Math.max(
+      this.app.maxConcurrentPluginSaves,
+      this.app.pendingPluginSaves.size,
+    );
+    await write;
+    this.app.pendingPluginSaves.delete(write);
+  }
+
+  registerEvent(): void {}
 
   registerView(type: string, creator: (leaf: WorkspaceLeaf) => unknown): void {
     this.views.set(type, creator);

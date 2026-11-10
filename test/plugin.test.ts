@@ -60,6 +60,10 @@ describe("manifest", () => {
     assert.equal(manifest.version, pkg.version);
   });
 
+  it("has a version in x.y.z form, as Obsidian's releases require", () => {
+    assert.match(String(manifest.version), /^\d+\.\d+\.\d+$/);
+  });
+
   it("lists its version in versions.json with its minimum Obsidian version", () => {
     assert.equal(versions[String(manifest.version)], manifest.minAppVersion);
   });

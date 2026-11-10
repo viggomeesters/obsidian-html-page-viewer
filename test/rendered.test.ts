@@ -31,7 +31,9 @@ describe("rendered view", () => {
     assert.ok(iframe);
     assert.deepEqual(sandboxTokens(iframe), []);
     assert.equal(securityPill(view), "Scripts OFF");
-    assert.equal(button(view, "Scripts OFF").getAttribute("aria-pressed"), "false");
+    const scripts = button(view, "Scripts OFF");
+    assert.equal(scripts.getAttribute("aria-pressed"), "false");
+    assert.equal(scripts.title, "Allow JavaScript on every open, including after file edits");
   });
 
   it("grants only allow-scripts when scripts are turned on, and revokes it when turned off", async () => {
@@ -45,6 +47,7 @@ describe("rendered view", () => {
     assert.deepEqual(sandboxTokens(iframe), ["allow-scripts"]);
     assert.equal(securityPill(view), "Scripts ON");
     assert.equal(button(view, "Scripts ON").getAttribute("aria-pressed"), "true");
+    assert.equal(button(view, "Scripts ON").title, "Disable JavaScript for this file");
 
     button(view, "Scripts ON").click();
     iframe = frame(view);
@@ -65,7 +68,7 @@ describe("rendered view", () => {
     }
   });
 
-  it("keeps scripts per view: a new tab starts with them off", async () => {
+  it("keeps scripts off for a different file in another tab", async () => {
     const harness = await Harness.load();
     const first = harness.newView();
     harness.open(first, "first.html", PAGE);
@@ -78,22 +81,64 @@ describe("rendered view", () => {
     assert.deepEqual(sandboxTokens(iframe), []);
   });
 
-  it(
-    "turns scripts off when another file opens in the same view",
-    { todo: "scripts stay on for the next file in the tab (#18)" },
-    async () => {
-      const harness = await Harness.load();
-      const view = harness.newView();
-      harness.open(view, "trusted.html", PAGE);
-      button(view, "Scripts OFF").click();
+  it("restores permission only when returning to the same file in a tab", async () => {
+    const harness = await Harness.load();
+    const view = harness.newView();
+    harness.open(view, "trusted.html", PAGE);
+    button(view, "Scripts OFF").click();
 
-      harness.open(view, "other.html", PAGE);
-      const iframe = frame(view);
-      assert.ok(iframe);
-      assert.deepEqual(sandboxTokens(iframe), []);
-      assert.equal(securityPill(view), "Scripts OFF");
-    },
-  );
+    harness.open(view, "other.html", PAGE);
+    assert.equal(securityPill(view), "Scripts OFF");
+    assert.equal(frame(view)?.getAttribute("sandbox"), "");
+
+    harness.open(view, "trusted.html", PAGE);
+    assert.equal(frame(view)?.getAttribute("sandbox"), "allow-scripts");
+  });
+
+  it("restores saved permission on plugin reload and saves rapid toggles in order", async () => {
+    const first = await Harness.load();
+    const original = first.newView();
+    first.open(original, "trusted.html", PAGE);
+    button(original, "Scripts OFF").click();
+    await first.flushPluginSaves();
+
+    const reopened = await Harness.load(first.app.pluginData);
+    const view = reopened.newView();
+    const sameFile = reopened.newView();
+    reopened.open(view, "trusted.html", PAGE);
+    reopened.open(sameFile, "trusted.html", PAGE);
+    assert.equal(frame(view)?.getAttribute("sandbox"), "allow-scripts");
+    assert.equal(frame(sameFile)?.getAttribute("sandbox"), "allow-scripts");
+
+    button(view, "Scripts ON").click();
+    assert.equal(frame(sameFile)?.getAttribute("sandbox"), "");
+    button(view, "Scripts OFF").click();
+    button(view, "Scripts ON").click();
+    await reopened.flushPluginSaves();
+    assert.equal(reopened.app.maxConcurrentPluginSaves, 1);
+    assert.deepEqual(reopened.app.pluginData, { scriptPaths: [] });
+  });
+
+  it("forgets renamed and deleted paths without rerendering unrelated tabs", async () => {
+    const harness = await Harness.load();
+    const renamed = harness.newView();
+    const deleted = harness.newView();
+    const other = harness.newView();
+    harness.open(renamed, "Reports/a.html", PAGE);
+    harness.open(deleted, "b.html", PAGE);
+    harness.open(other, "c.html", PAGE);
+    for (const view of [renamed, deleted, other]) button(view, "Scripts OFF").click();
+    const otherFrame = frame(other);
+    assert.ok(otherFrame);
+
+    harness.app.vaultEvents.get("rename")?.({ path: "Archive" }, "Reports");
+    harness.app.vaultEvents.get("delete")?.({ path: "b.html" }, "");
+    assert.equal(frame(renamed)?.getAttribute("sandbox"), "");
+    assert.equal(frame(deleted)?.getAttribute("sandbox"), "");
+    assert.equal(frame(other), otherFrame);
+    await harness.flushPluginSaves();
+    assert.deepEqual(harness.app.pluginData, { scriptPaths: ["c.html"] });
+  });
 
   it("reloads the file and the frame when refreshed", async () => {
     const harness = await Harness.load();

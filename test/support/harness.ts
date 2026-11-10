@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { setImmediate } from "node:timers/promises";
 import HtmlPageViewerPlugin from "../../src/main";
-import { App, Plugin, TFile, WorkspaceLeaf } from "./obsidian";
+import { App, Plugin, TFile } from "./obsidian";
 
 export const VIEW_TYPE = "html-page-viewer";
 
@@ -23,8 +24,9 @@ export class Harness {
     this.plugin = new HtmlPageViewerPlugin(this.app as never, {} as never) as unknown as Plugin;
   }
 
-  static async load(): Promise<Harness> {
+  static async load(savedData: unknown = null): Promise<Harness> {
     const harness = new Harness();
+    harness.app.pluginData = savedData;
     await (harness.plugin as unknown as HtmlPageViewerPlugin).onload();
     return harness;
   }
@@ -33,7 +35,16 @@ export class Harness {
   newView(): HtmlView {
     const creator = this.plugin.views.get(VIEW_TYPE);
     assert.ok(creator, "the plugin registers its view");
-    return creator(new WorkspaceLeaf(this.app)) as HtmlView;
+    const leaf = this.app.workspace.getLeaf();
+    const view = creator(leaf) as HtmlView;
+    leaf.view = view;
+    return view;
+  }
+
+  async flushPluginSaves(): Promise<void> {
+    do {
+      await setImmediate();
+    } while (this.app.pendingPluginSaves.size > 0);
   }
 
   /** Loads a file into a view as Obsidian does when a file opens in its tab. */

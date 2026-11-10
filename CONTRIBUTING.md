@@ -4,8 +4,10 @@ Thanks for helping improve HTML Page Viewer.
 
 ## Local setup
 
+Use Node.js 24.15 or later in the 24.x series for local development.
+
 ```bash
-npm install
+npm ci
 npm run build
 npx tsc --noEmit
 npm test

@@ -14,6 +14,8 @@ Do not include sensitive vault content in public issues. If a reproduction requi
 
 HTML Page Viewer is read-only. It reads HTML files through Obsidian's vault API and renders them in a sandboxed iframe.
 
-Scripts are disabled by default. When the user explicitly turns scripts on for a viewer tab, the iframe receives `allow-scripts` only. It does not receive `allow-same-origin`, `allow-forms`, `allow-popups`, or `allow-top-navigation`.
+Scripts are disabled by default. When the user explicitly turns scripts on for an HTML file, the iframe receives `allow-scripts` only. It does not receive `allow-same-origin`, `allow-forms`, `allow-popups`, or `allow-top-navigation`.
+
+Permission is stored by vault-relative path in the plugin's data. An allowed file can still run scripts after its contents change. Renames and deletions observed by Obsidian clear permission for the old path.
 
 HTML files can still request external resources such as images, stylesheets, fonts, or scripts when the rendered page itself references them. The plugin code does not make network requests, does not read or write the system clipboard, and does not write HTML files back to disk.
