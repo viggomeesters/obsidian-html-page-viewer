@@ -13,12 +13,24 @@ const HTML_EXTENSIONS = ["html", "htm"];
 type ViewMode = "rendered" | "source";
 
 export default class HtmlPageViewerPlugin extends Plugin {
+  private readonly scriptPaths = new Set<string>();
+  private pendingSave: Promise<void> = Promise.resolve();
+
   async onload(): Promise<void> {
+    const saved = (await this.loadData()) as { scriptPaths?: unknown } | null;
+    if (Array.isArray(saved?.scriptPaths)) {
+      for (const path of saved.scriptPaths) {
+        if (typeof path === "string") this.scriptPaths.add(path);
+      }
+    }
+
     this.registerView(
       VIEW_TYPE_HTML_PAGE_VIEWER,
-      (leaf) => new HtmlPageViewerView(leaf),
+      (leaf) => new HtmlPageViewerView(leaf, this),
     );
     this.registerExtensions(HTML_EXTENSIONS, VIEW_TYPE_HTML_PAGE_VIEWER);
+    this.registerEvent(this.app.vault.on("delete", (file) => this.forgetScriptPaths(file.path)));
+    this.registerEvent(this.app.vault.on("rename", (_file, oldPath) => this.forgetScriptPaths(oldPath)));
 
     this.addCommand({
       id: "open-current-html-in-viewer",
@@ -43,15 +55,64 @@ export default class HtmlPageViewerPlugin extends Plugin {
       active: true,
     });
   }
+
+  allowsScripts(path: string): boolean {
+    return this.scriptPaths.has(path);
+  }
+
+  toggleScripts(path: string): void {
+    if (!this.scriptPaths.delete(path)) this.scriptPaths.add(path);
+    this.saveScriptPaths();
+    this.refreshScriptViews();
+  }
+
+  private forgetScriptPaths(path: string): void {
+    let changed = false;
+    for (const allowedPath of this.scriptPaths) {
+      if (allowedPath === path || allowedPath.startsWith(`${path}/`)) {
+        this.scriptPaths.delete(allowedPath);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+
+    this.saveScriptPaths();
+    this.refreshScriptViews();
+  }
+
+  private refreshScriptViews(): void {
+    for (const { view } of this.app.workspace.getLeavesOfType(VIEW_TYPE_HTML_PAGE_VIEWER)) {
+      if (view instanceof HtmlPageViewerView) {
+        view.refreshScriptPermission();
+      }
+    }
+  }
+
+  private saveScriptPaths(): void {
+    const scriptPaths = [...this.scriptPaths];
+    this.pendingSave = this.pendingSave
+      .then(() => this.saveData({ scriptPaths }))
+      .catch(() => {
+        new Notice("Could not save script permissions. They may revert when Obsidian restarts.");
+      });
+  }
 }
 
 class HtmlPageViewerView extends TextFileView {
   private mode: ViewMode = "rendered";
-  private scriptsEnabled = false;
+  private renderedScriptsEnabled = false;
   private iframe: HTMLIFrameElement | null = null;
 
-  constructor(leaf: WorkspaceLeaf) {
+  constructor(leaf: WorkspaceLeaf, private readonly plugin: HtmlPageViewerPlugin) {
     super(leaf);
+  }
+
+  private get scriptsEnabled(): boolean {
+    return isHtmlFile(this.file) && this.plugin.allowsScripts(this.file.path);
+  }
+
+  refreshScriptPermission(): void {
+    if (this.renderedScriptsEnabled !== this.scriptsEnabled) this.render();
   }
 
   getViewType(): string {
@@ -82,6 +143,7 @@ class HtmlPageViewerView extends TextFileView {
   }
 
   private render(): void {
+    this.renderedScriptsEnabled = this.scriptsEnabled;
     const container = this.contentEl;
     container.empty();
     container.addClass("html-page-viewer");
@@ -165,10 +227,16 @@ class HtmlPageViewerView extends TextFileView {
     scriptsButton.addClass("html-page-viewer__scripts-toggle");
     scriptsButton.toggleClass("is-enabled", this.scriptsEnabled);
     scriptsButton.setAttribute("aria-pressed", String(this.scriptsEnabled));
-    scriptsButton.setAttribute("title", "Toggle JavaScript for this viewer tab");
+    scriptsButton.setAttribute("title", this.scriptsEnabled
+      ? "Disable JavaScript for this file"
+      : "Allow JavaScript on every open, including after file edits");
+    const file = this.file;
+    const path = file?.path;
+    scriptsButton.disabled = !isHtmlFile(file);
     scriptsButton.addEventListener("click", () => {
-      this.scriptsEnabled = !this.scriptsEnabled;
-      this.render();
+      if (path !== undefined && this.file === file && file?.path === path) {
+        this.plugin.toggleScripts(path);
+      }
     });
   }
 
