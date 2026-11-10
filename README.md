@@ -22,7 +22,7 @@ HTML Page Viewer is a read-only Obsidian plugin for opening `.html` and `.htm` f
 - Provides a source view with lightweight HTML syntax highlighting and line numbers.
 - Includes a toolbar for Rendered/Source, Refresh, and Scripts OFF/ON.
 - Keeps scripts disabled by default.
-- Enables scripts only for the current viewer tab when explicitly toggled on.
+- Remembers explicit script permission separately for each HTML file.
 - Renders through a sandboxed iframe.
 - Blocks forms, popups, top-level navigation, and same-origin access.
 - Stays read-only by design: it never writes back to HTML files.
@@ -74,9 +74,9 @@ Use the toolbar to:
 
 - switch between the rendered preview and source view
 - refresh the rendered preview after file changes
-- turn scripts on or off for the current viewer tab
+- turn scripts on or off for the current HTML file
 
-Scripts are intentionally per-tab. Opening a new HTML file starts with scripts off again.
+The Scripts toggle remembers your choice when you switch files or restart Obsidian. Enable it only for files you trust, including future edits at the same path. Turning scripts off removes the saved permission. Renaming, moving, or deleting a file in Obsidian clears permission for its old path.
 
 ## Development
 

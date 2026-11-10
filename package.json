@@ -1,6 +1,6 @@
 {
   "name": "obsidian-html-page-viewer",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Read-only rendered and source HTML page viewer.",
   "license": "MIT",
   "author": "Viggo Meesters",
