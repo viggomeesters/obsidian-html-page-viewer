@@ -36,13 +36,13 @@ HTML files can execute powerful browser behavior if a viewer permits it. HTML Pa
 - The iframe is never granted `allow-same-origin`, `allow-forms`, `allow-popups`, or `allow-top-navigation`.
 - The plugin code does not make network requests.
 - The plugin code does not read or write the system clipboard.
-- The plugin code does not edit vault files.
+- The plugin saves script permissions in its own settings.
 
 Rendered HTML may still request external resources, such as images, stylesheets, fonts, or scripts, when the HTML document itself references them. This is normal browser behavior for rendered HTML pages and is separate from plugin code making network requests.
 
 ## Why read-only?
 
-HTML reports and exported pages are often generated artifacts. HTML Page Viewer intentionally does not write to disk, so it cannot reformat, truncate, or corrupt your files.
+HTML reports and exported pages are often generated artifacts. HTML Page Viewer leaves your HTML files untouched.
 
 ## Installation
 
