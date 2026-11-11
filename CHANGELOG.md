@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4 - 2026-11-11
+
+- Preserve source whitespace and highlighting across multiline tags, attribute values, and comments.
+- Handle quoted tag delimiters and script/style content in source view.
+
 ## 0.1.3 - 2026-11-10
 
 - Remember the Scripts toggle per HTML file across note changes and Obsidian restarts. Scripts start off for files without permission.
