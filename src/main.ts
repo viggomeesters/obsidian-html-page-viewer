@@ -284,132 +284,187 @@ export function sandboxValue(scriptsEnabled: boolean): string {
 function renderSource(parent: HTMLElement, data: string): void {
   const source = parent.createDiv({ cls: "html-page-viewer__source" });
   const pre = source.createEl("pre");
-  data.split("\n").forEach((line, index) => {
+  let lineNumber = 0;
+  const startLine = (): HTMLElement => {
+    lineNumber += 1;
     const lineEl = pre.createDiv({ cls: "html-page-viewer__source-line" });
-    lineEl.createSpan({ cls: "html-page-viewer__line-number", text: String(index + 1) });
-    const code = lineEl.createSpan({ cls: "html-page-viewer__source-code" });
-    highlightHtmlLine(code, line);
-  });
+    lineEl.createSpan({ cls: "html-page-viewer__line-number", text: String(lineNumber) });
+    return lineEl.createSpan({ cls: "html-page-viewer__source-code" });
+  };
+
+  // A token can continue over several lines, as a comment or a tag can, and
+  // keeps its highlighting on each of them.
+  let code = startLine();
+  for (const token of tokenizeHtml(data)) {
+    token.text.split("\n").forEach((part, index) => {
+      if (index > 0) code = startLine();
+      if (part === "") return;
+      if (token.kind === "text") {
+        code.appendText(part);
+      } else {
+        code.createSpan({ cls: `html-page-viewer__tok-${token.kind}`, text: part });
+      }
+    });
+  }
 }
 
-function highlightHtmlLine(parent: HTMLElement, line: string): void {
+type TokenKind = "text" | "comment" | "punctuation" | "tag" | "attr" | "string";
+
+interface Token {
+  readonly kind: TokenKind;
+  text: string;
+}
+
+/** Elements whose contents HTML reads as text up to their end tag. */
+const RAW_TEXT_ELEMENTS = new Set(["iframe", "noembed", "noframes", "script", "style", "textarea", "title", "xmp"]);
+
+/** HTML's whitespace, which excludes the other spaces that `\s` matches. */
+const HTML_SPACE = /[\t\n\f\r ]/;
+
+/** What ends a tag's name, an attribute's name, and a value without quotes. */
+const TAG_NAME_END = /[\t\n\f\r />]/;
+const ATTRIBUTE_NAME_END = /[\t\n\f\r />=]/;
+const UNQUOTED_VALUE_END = /[\t\n\f\r >]/;
+
+/**
+ * Splits HTML into tokens to highlight, where HTML's tokenizer would see tags,
+ * comments, and text. The tokens' texts together are exactly `html`.
+ */
+function tokenizeHtml(html: string): Token[] {
+  const tokens: Token[] = [];
+  const push = (kind: TokenKind, text: string): void => {
+    if (text === "") return;
+    const last = tokens[tokens.length - 1];
+    if (last?.kind === kind) {
+      last.text += text;
+    } else {
+      tokens.push({ kind, text });
+    }
+  };
+
   let cursor = 0;
-
-  while (cursor < line.length) {
-    const commentStart = line.indexOf("<!--", cursor);
-    const tagStart = line.indexOf("<", cursor);
-    const nextStart = nextTokenStart(commentStart, tagStart);
-
-    if (nextStart === -1) {
-      parent.appendText(line.slice(cursor));
-      return;
+  while (cursor < html.length) {
+    const start = nextMarkupStart(html, cursor);
+    if (start === -1) {
+      push("text", html.slice(cursor));
+      break;
     }
+    push("text", html.slice(cursor, start));
 
-    if (nextStart > cursor) {
-      parent.appendText(line.slice(cursor, nextStart));
-    }
-
-    if (nextStart === commentStart) {
-      const commentEnd = line.indexOf("-->", commentStart + 4);
-      const end = commentEnd === -1 ? line.length : commentEnd + 3;
-      parent.createSpan({
-        cls: "html-page-viewer__tok-comment",
-        text: line.slice(commentStart, end),
-      });
-      cursor = end;
+    if (html.startsWith("<!--", start)) {
+      cursor = commentEnd(html, start);
+      push("comment", html.slice(start, cursor));
       continue;
     }
 
-    const tagEnd = line.indexOf(">", tagStart + 1);
-    const end = tagEnd === -1 ? line.length : tagEnd + 1;
-    highlightTag(parent, line.slice(tagStart, end));
+    const isEndTag = html[start + 1] === "/";
+    const nameStart = start + (isEndTag ? 2 : 1);
+    if (!/[A-Za-z]/.test(html[nameStart] ?? "")) {
+      // A doctype, or another construct that HTML skips up to the next ">".
+      const end = html.indexOf(">", start + 2);
+      cursor = end === -1 ? html.length : end + 1;
+      push("punctuation", html.slice(start, cursor));
+      continue;
+    }
+
+    let nameEnd = nameStart;
+    while (nameEnd < html.length && !TAG_NAME_END.test(html[nameEnd])) nameEnd += 1;
+    push("punctuation", html.slice(start, nameStart));
+    push("tag", html.slice(nameStart, nameEnd));
+    const end = tokenizeAttributes(html, nameEnd, push);
+    if (end === -1) break;
     cursor = end;
+
+    const name = html.slice(nameStart, nameEnd).toLowerCase();
+    if (isEndTag) continue;
+    if (name === "plaintext") {
+      push("text", html.slice(cursor));
+      break;
+    }
+    if (RAW_TEXT_ELEMENTS.has(name)) {
+      const end = rawTextEnd(html, cursor, name);
+      push("text", html.slice(cursor, end));
+      cursor = end;
+    }
   }
+  return tokens;
 }
 
-function nextTokenStart(commentStart: number, tagStart: number): number {
-  if (commentStart === -1) return tagStart;
-  if (tagStart === -1) return commentStart;
-  return Math.min(commentStart, tagStart);
+/** Where the next tag, comment, or declaration starts: a `<` that HTML reads as markup. */
+function nextMarkupStart(html: string, from: number): number {
+  let start = html.indexOf("<", from);
+  while (start !== -1 && !/[A-Za-z/!?]/.test(html[start + 1] ?? "")) {
+    start = html.indexOf("<", start + 1);
+  }
+  return start;
 }
 
-function highlightTag(parent: HTMLElement, tag: string): void {
-  let cursor = 0;
-  const tagName = tag.match(/^<\s*\/?\s*([A-Za-z][A-Za-z0-9:._-]*)/);
-
-  if (!tagName) {
-    parent.createSpan({ cls: "html-page-viewer__tok-punctuation", text: tag });
-    return;
-  }
-
-  const matchIndex = tagName.index ?? 0;
-  const nameStart = matchIndex + tagName[0].lastIndexOf(tagName[1]);
-  const nameEnd = nameStart + tagName[1].length;
-  parent.createSpan({ cls: "html-page-viewer__tok-punctuation", text: tag.slice(0, nameStart) });
-  parent.createSpan({ cls: "html-page-viewer__tok-tag", text: tag.slice(nameStart, nameEnd) });
-  cursor = nameEnd;
-
-  while (cursor < tag.length) {
-    const attr = nextAttributeToken(tag, cursor);
-    if (!attr) {
-      parent.createSpan({ cls: "html-page-viewer__tok-punctuation", text: tag.slice(cursor) });
-      return;
-    }
-
-    if (attr.start > cursor) {
-      parent.createSpan({ cls: "html-page-viewer__tok-punctuation", text: tag.slice(cursor, attr.start) });
-    }
-    parent.createSpan({ cls: "html-page-viewer__tok-attr", text: attr.name });
-    if (attr.value) {
-      parent.createSpan({ cls: "html-page-viewer__tok-punctuation", text: attr.separator });
-      parent.createSpan({ cls: "html-page-viewer__tok-string", text: attr.value });
-    }
-    cursor = attr.end;
-  }
+/** The end of the comment that starts at `start`, or of `html` if it has none. */
+function commentEnd(html: string, start: number): number {
+  const body = start + 4;
+  // `<!-->` and `<!--->` are whole comments.
+  if (html.startsWith(">", body)) return body + 1;
+  if (html.startsWith("->", body)) return body + 2;
+  const close = /--!?>/g;
+  close.lastIndex = body;
+  const match = close.exec(html);
+  return match ? match.index + match[0].length : html.length;
 }
 
-function nextAttributeToken(
-  tag: string,
-  start: number,
-): { start: number; end: number; name: string; separator: string; value: string } | null {
+/**
+ * Tokenizes a tag's attributes from `start`, after its name, and returns where
+ * the tag ends: after its `>`, which a quoted value can contain, or -1 if the
+ * file ends first.
+ */
+function tokenizeAttributes(html: string, start: number, push: (kind: TokenKind, text: string) => void): number {
   let cursor = start;
-  while (cursor < tag.length && /\s/.test(tag[cursor])) cursor += 1;
-  if (cursor >= tag.length || tag[cursor] === ">" || tag[cursor] === "/") return null;
-
-  const nameStart = cursor;
-  while (cursor < tag.length && isAttributeNameChar(tag[cursor])) cursor += 1;
-  if (cursor === nameStart) return null;
-
-  const name = tag.slice(nameStart, cursor);
-  let separator = "";
-  let value = "";
-
-  while (cursor < tag.length && /\s/.test(tag[cursor])) cursor += 1;
-  if (tag[cursor] === "=") {
-    const separatorStart = cursor;
-    cursor += 1;
-    while (cursor < tag.length && /\s/.test(tag[cursor])) cursor += 1;
-    separator = tag.slice(separatorStart, cursor);
-
-    if (tag[cursor] === "\"" || tag[cursor] === "'") {
-      const quote = tag[cursor];
-      const valueStart = cursor;
+  while (cursor < html.length) {
+    const char = html[cursor];
+    if (char === ">") {
+      push("punctuation", char);
+      return cursor + 1;
+    }
+    if (char === "/" || HTML_SPACE.test(char)) {
+      push("punctuation", char);
       cursor += 1;
-      while (cursor < tag.length && tag[cursor] !== quote) cursor += 1;
-      if (cursor < tag.length) cursor += 1;
-      value = tag.slice(valueStart, cursor);
+      continue;
+    }
+
+    // A name runs up to whitespace, "/", ">", or "=", and can start with "=".
+    const nameStart = cursor;
+    cursor += 1;
+    while (cursor < html.length && !ATTRIBUTE_NAME_END.test(html[cursor])) cursor += 1;
+    push("attr", html.slice(nameStart, cursor));
+
+    let equals = cursor;
+    while (equals < html.length && HTML_SPACE.test(html[equals])) equals += 1;
+    if (html[equals] !== "=") continue;
+
+    const separatorStart = cursor;
+    cursor = equals + 1;
+    while (cursor < html.length && HTML_SPACE.test(html[cursor])) cursor += 1;
+    push("punctuation", html.slice(separatorStart, cursor));
+
+    const quote = html[cursor];
+    if (quote === "\"" || quote === "'") {
+      const close = html.indexOf(quote, cursor + 1);
+      const end = close === -1 ? html.length : close + 1;
+      push("string", html.slice(cursor, end));
+      cursor = end;
     } else {
       const valueStart = cursor;
-      while (cursor < tag.length && !/\s|>/.test(tag[cursor])) cursor += 1;
-      value = tag.slice(valueStart, cursor);
+      while (cursor < html.length && !UNQUOTED_VALUE_END.test(html[cursor])) cursor += 1;
+      push("string", html.slice(valueStart, cursor));
     }
   }
-
-  return { start: nameStart, end: cursor, name, separator, value };
+  return -1;
 }
 
-function isAttributeNameChar(char: string): boolean {
-  return /[A-Za-z0-9:._-]/.test(char);
+/** Where the text of a raw text element such as `script` ends: at its end tag. */
+function rawTextEnd(html: string, start: number, name: string): number {
+  const endTag = new RegExp(`</${name}[\\t\\n\\f\\r />]`, "gi");
+  endTag.lastIndex = start;
+  return endTag.exec(html)?.index ?? html.length;
 }
 
 function createIconButton(parent: HTMLElement, icon: string, label: string): HTMLButtonElement {
